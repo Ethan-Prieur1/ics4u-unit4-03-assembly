@@ -1,64 +1,48 @@
-; ---------------------------------------------------------------
-; Uses a loop to print out 0-9.
+; --------------------------------------------------------------
+; prints 0-9 using a loop.
 ; Runs on 64-bit x86 Linux only.
 ; Date: 2022-11-24, Author: Ethan Prieur
-; ---------------------------------------------------------------
+; --------------------------------------------------------------
 
 section .bss
-    variable: RESD 1               ; 4 bytes 
+     number: RESD 1
 
 section .data
-     newline: db 10                  ; UNICODE 10 is new line character 
-     done: db 10, "Done.", 10
-     doneLen: equ $-done
 
+    ;  constants here
+     done: db 10, "Done.", 10      ; Done
+     doneLen: equ $-done           ;  length of string
+     newLine: db 10
 
 section .text
     global _start                  ; entry point for linker
 
     _start:                        ; start here
-        mov rax, 1
-        mov rdi, 1
-        mov rsi, input
-        mov rdx, inputLen
-        syscall
+        mov r8, 48
 
-        ; read 2 bytes from stdin 
-        mov rax, 3                 ; 3 is recognized by the system as meaning "read"
-        mov rdx, 0                 ; read from standard input
-        mov rcx, variable          ; address of number to input
-        mov rdx, 2                 ; number of bytes
-        int 0x80                   ; call the kernel
-        
-        ; print a new line
-        mov rax, 1
-        mov rdi, 1
-        mov rsi, newline
-        mov rdx, 1
-        syscall
+        LoopIncrement:
+            ; reassigns some_number to another value
+            mov [number], r8
+            
+            ; prints number
+            mov rax, 4                 ; system call for write
+            mov rdi, 1                 ; file handle 1 is stdout
+            mov rcx, number       ; address of string to output
+            mov rdx, 1                 ; number of bytes
+            int 0x80                   ; call the kernel
 
-        ; print "The number is: "
-        mov rax, 1                 ; system call for write
-        mov rbx, 1                 ; file handle 1 is stdout
-        mov rsi, output            ; address of string to output
-        mov rdx, outputLen         ; number of bytes
-        syscall                    ; invoke operating system to do the write
+            ; prints a newLine
+            mov rax, 1
+            mov rdi, 1
+            mov rsi, newLine
+            mov rdx, 1
+            syscall
 
-        ; print a byte to stdout
-        mov rax, 4                 ; the system interprets 4 as "write"
-        mov rbx, 1                 ; standard output (print to terminal)
-        mov rcx, variable          ; pointer to the value being passed
-        mov rdx, 2                 ; length of output (in bytes)
-        int 0x80                   ; call the kernel
+            inc r8
+            cmp r8, 57
+            jle LoopIncrement
 
-        ; print a new line
-        mov rax, 1
-        mov rdi, 1
-        mov rsi, newline
-        mov rdx, 1
-        syscall
-
-        ; print "Done."
+        ; prints "Done."
         mov rax, 1
         mov rdi, 1
         mov rsi, done
